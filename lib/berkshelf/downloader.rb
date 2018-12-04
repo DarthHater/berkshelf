@@ -69,6 +69,8 @@ module Berkshelf
 
     V1_API = "https://supermarket.chef.io".freeze
 
+    V1_API_BASE_PATH = "/api/v1/cookbooks".freeze
+
     # @param [Berkshelf::Berksfile] berksfile
     # @option options [Integer] :retries (5)
     #   retry requests on 5XX failures
@@ -143,7 +145,7 @@ module Berkshelf
         # Allow Berkshelf install to function if a relative url exists in location_path
         path = URI.parse(remote_cookbook.location_path).absolute? ? remote_cookbook.location_path : "#{source.uri_string}#{remote_cookbook.location_path}"
 
-        do_download(source, name, version)
+        do_download(source, name, version, path)
       when :chef_server
         tmp_dir      = Dir.mktmpdir
         unpack_dir   = Pathname.new(tmp_dir) + "#{name}-#{version}"
@@ -288,7 +290,7 @@ module Berkshelf
     #
     # @return [String, nil]
     #   cookbook filepath, or nil if archive does not contain a cookbook
-    def do_download(source, name, version)
+    def do_download(source, name, version, path)
       archive = stream(source, find(name, version)["file"])
       scratch = Dir.mktmpdir
       extracted = self.class.unpack(archive.path, scratch)
@@ -305,7 +307,7 @@ module Berkshelf
     end
 
     def find(name, version)
-      body = connection.get("api/v1/cookbooks/#{name}/versions/#{self.class.uri_escape_version(version)}")
+      body = connection.get("#{V1_API_BASE_PATH}/#{name}/versions/#{self.class.uri_escape_version(version)}")
 
       # Artifactory responds with a 200 and blank body for unknown cookbooks.
       raise CookbookNotFound.new(name, nil, "at `#{api_uri}'") if body.nil?
@@ -323,7 +325,7 @@ module Berkshelf
     #
     # @return [String]
     def latest_version(name)
-      body = connection.get("api/v1/cookbooks/#{name}")
+      body = connection.get("#{V1_API_BASE_PATH}/#{name}")
 
       # Artifactory responds with a 200 and blank body for unknown cookbooks.
       raise CookbookNotFound.new(name, nil, "at `#{api_uri}'") if body.nil?
@@ -365,7 +367,7 @@ module Berkshelf
     #
     # @return [Array]
     def versions(name)
-      body = connection.get("api/v1/cookbooks/#{name}")
+      body = connection.get("#{V1_API_BASE_PATH}/#{name}")
 
       # Artifactory responds with a 200 and blank body for unknown cookbooks.
       raise CookbookNotFound.new(name, nil, "at `#{api_uri}'") if body.nil?
