@@ -1,6 +1,6 @@
 require "spec_helper"
 
-describe Berkshelf::CommunityREST do
+describe Berkshelf::Downloader do
   describe "ClassMethods" do
     describe "::unpack" do
       let(:target) { "/foo/bar" }
@@ -20,56 +20,56 @@ describe Berkshelf::CommunityREST do
         expect(Mixlib::Archive).to receive(:new).with(target).and_return(archive)
         expect(archive).to receive(:extract).with(destination)
 
-        expect(Berkshelf::CommunityREST.unpack(target, destination)).to eq(destination)
+        expect(Berkshelf::Downloader.unpack(target, destination)).to eq(destination)
       end
     end
 
     describe "::uri_escape_version" do
       it "returns a string" do
-        expect(Berkshelf::CommunityREST.uri_escape_version(nil)).to be_a(String)
+        expect(Berkshelf::Downloader.uri_escape_version(nil)).to be_a(String)
       end
 
       it "converts a version to it's underscored version" do
-        expect(Berkshelf::CommunityREST.uri_escape_version("1.1.2")).to eq("1_1_2")
+        expect(Berkshelf::Downloader.uri_escape_version("1.1.2")).to eq("1_1_2")
       end
 
       it "works when the version has more than three points" do
-        expect(Berkshelf::CommunityREST.uri_escape_version("1.1.1.2")).to eq("1_1_1_2")
+        expect(Berkshelf::Downloader.uri_escape_version("1.1.1.2")).to eq("1_1_1_2")
       end
 
       it "works when the version has less than three points" do
-        expect(Berkshelf::CommunityREST.uri_escape_version("1.2")).to eq("1_2")
+        expect(Berkshelf::Downloader.uri_escape_version("1.2")).to eq("1_2")
       end
     end
 
     describe "::version_from_uri" do
       it "returns a string" do
-        expect(Berkshelf::CommunityREST.version_from_uri(nil)).to be_a(String)
+        expect(Berkshelf::Downloader.version_from_uri(nil)).to be_a(String)
       end
 
       it "extracts the version from the URL" do
-        expect(Berkshelf::CommunityREST.version_from_uri("/api/v1/cookbooks/nginx/versions/1_1_2")).to eq("1.1.2")
+        expect(Berkshelf::Downloader.version_from_uri("/api/v1/cookbooks/nginx/versions/1_1_2")).to eq("1.1.2")
       end
 
       it "works when the version has more than three points" do
-        expect(Berkshelf::CommunityREST.version_from_uri("/api/v1/cookbooks/nginx/versions/1_1_1_2")).to eq("1.1.1.2")
+        expect(Berkshelf::Downloader.version_from_uri("/api/v1/cookbooks/nginx/versions/1_1_1_2")).to eq("1.1.1.2")
       end
 
       it "works when the version has less than three points" do
-        expect(Berkshelf::CommunityREST.version_from_uri("/api/v1/cookbooks/nginx/versions/1_2")).to eq("1.2")
+        expect(Berkshelf::Downloader.version_from_uri("/api/v1/cookbooks/nginx/versions/1_2")).to eq("1.2")
       end
     end
   end
 
-  let(:api_uri) { Berkshelf::CommunityREST::V1_API }
-  subject { Berkshelf::CommunityREST.new(api_uri) }
+  let(:api_uri) { Berkshelf::Downloader::V1_API }
+  subject { Berkshelf::Downloader.new(api_uri) }
 
   describe "#download" do
     let(:archive) { double("archive", path: "/foo/bar", unlink: true) }
 
     before do
       allow(subject).to receive(:stream).with(any_args()).and_return(archive)
-      allow(Berkshelf::CommunityREST).to receive(:unpack)
+      allow(Berkshelf::Downloader).to receive(:unpack)
         .and_return("/some/path")
     end
 
@@ -80,7 +80,7 @@ describe Berkshelf::CommunityREST do
         headers: { "Content-Type" => "application/json" }
       )
 
-      expect(Berkshelf::CommunityREST).to receive(:unpack)
+      expect(Berkshelf::Downloader).to receive(:unpack)
         .with("/foo/bar", String)
         .and_return("/foo/nginx")
         .once
